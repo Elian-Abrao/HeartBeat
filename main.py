@@ -4,7 +4,7 @@ from flask_cors import CORS
 import base64
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})  # Permitir todas as origens
+CORS(app)  # Permite CORS de qualquer origem
 
 # Dicionário para armazenar o último heartbeat e estado de cada VM
 heartbeats = {}
