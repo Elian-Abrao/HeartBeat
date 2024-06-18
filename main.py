@@ -1,10 +1,14 @@
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, render_template_string, send_from_directory
 from datetime import datetime
+import os
 from flask_cors import CORS
-import base64
 
 app = Flask(__name__)
 CORS(app)  # Permite CORS de qualquer origem
+
+# Diretório onde os arquivos serão salvos
+UPLOAD_FOLDER = 'uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Dicionário para armazenar o último heartbeat e estado de cada VM
 heartbeats = {}
@@ -29,18 +33,14 @@ def index():
 
 @app.route('/heartbeat', methods=['POST'])
 def heartbeat():
-    print("Recebendo solicitação de heartbeat")
-    
     # Verificar a senha
     senha = request.form.get('senha')
     if senha != SENHA_ESPERADA:
-        print("Senha inválida:", senha)
         return jsonify({"status": "erro", "mensagem": "Credenciais inválidas"}), 401
 
     # Verificar status válido
     state = request.form.get('state', 'Unknown')
     if state not in STATUS_VALIDOS:
-        print("Status inválido:", state)
         return jsonify({"status": "erro", "mensagem": "Status inválido"}), 400
 
     vm_name = request.form.get('vm_name')
@@ -54,7 +54,11 @@ def heartbeat():
     log_content = ""
     if arquivo:
         filename = f"{vm_name}_{arquivo.filename}"
-        log_content = base64.b64encode(arquivo.read()).decode('utf-8')
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        arquivo.save(filepath)
+        # Ler o conteúdo do arquivo de log
+        with open(filepath, 'r') as file:
+            log_content = file.read()
 
     heartbeats[code_name] = {
         "code_name": vm_name,
@@ -65,7 +69,6 @@ def heartbeat():
         "log": log_content
     }
 
-    print("Heartbeat registrado:", heartbeats[code_name])
     return jsonify({"status": "success", "timestamp": timestamp}), 200
 
 @app.route('/status', methods=['GET'])
@@ -115,7 +118,7 @@ def view():
                 <td>{{ info.state }}</td>
                 <td>
                     {% if info.file %}
-                        <a href="/download/{{ vm_name }}">Download</a>
+                        <a href="/download/{{ info.file }}">Download</a>
                     {% else %}
                         No File
                     {% endif %}
@@ -129,26 +132,19 @@ def view():
     """
     return render_template_string(template, heartbeats=heartbeats)
 
-@app.route('/download/<vm_name>', methods=['GET'])
-def download(vm_name):
-    if vm_name in heartbeats:
-        info = heartbeats[vm_name]
-        if info["file"]:
-            log_content = base64.b64decode(info["log"].encode('utf-8'))
-            return log_content, 200, {
-                'Content-Type': 'application/octet-stream',
-                'Content-Disposition': f'attachment; filename={info["file"]}'
-            }
-    return jsonify({"status": "erro", "mensagem": "Arquivo não encontrado"}), 404
+@app.route('/download/<filename>', methods=['GET'])
+def download(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
-@app.route('/view_file/<vm_name>', methods=['GET'])
-def view_file(vm_name):
-    if vm_name in heartbeats:
-        info = heartbeats[vm_name]
-        if info["file"]:
-            log_content = base64.b64decode(info["log"].encode('utf-8')).decode('utf-8')
-            return jsonify({"Conteudo": log_content})
-    return jsonify({"status": "erro", "mensagem": "Arquivo não encontrado"}), 404
+@app.route('/view_file/<filename>', methods=['GET'])
+def view_file(filename):
+    filepath = os.path.join(UPLOAD_FOLDER, filename)
+    if os.path.exists(filepath):
+        with open(filepath, 'r') as file:
+            content = file.read()
+        return jsonify({"Conteudo": content})
+    else:
+        return jsonify({"status": "erro", "mensagem": "Arquivo não encontrado"}), 404
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
