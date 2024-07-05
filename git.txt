@@ -1,0 +1,99 @@
+
+🎉 **Configurar Git e GitHub**:
+# Configurar nome de usuário e email
+git config --global user.name "Seu Nome"
+git config --global user.email "seu-email@example.com"
+
+# Verificar configuração
+git config --list
+
+
+🔧 **Inicializar um repositório Git**:
+git init
+
+
+📂 **Clonar um repositório existente**:
+git clone https://github.com/usuario/repositorio.git
+
+
+➕ **Adicionar arquivos ao staging area**:
+git add .
+
+
+💾 **Comitar as mudanças**:
+git commit -m "Mensagem do commit"
+
+
+🌐 **Adicionar um repositório remoto**:
+git remote add origin https://github.com/usuario/repositorio.git
+
+
+🚀 **Enviar as mudanças para o repositório remoto**:
+git push origin master
+
+
+🔍 **Verificar o status do repositório**:
+git status
+
+
+📜 **Verificar o histórico de commits**:
+git log
+
+
+🌿 **Criar e trocar de branch**:
+# Criar uma nova branch
+git branch nome-da-branch
+
+# Trocar para a nova branch
+git checkout nome-da-branch
+
+
+🔄 **Mesclar uma branch no master**:
+# Primeiro, troque para a branch master
+git checkout master
+
+# Depois, faça o merge da outra branch
+git merge nome-da-branch
+
+
+❌ **Excluir uma branch**:
+git branch -d nome-da-branch
+
+
+🔄 **Atualizar o repositório local com mudanças do repositório remoto**:
+git pull origin master
+
+
+⏪ **Reverter um commit**:
+git revert id-do-commit
+
+
+⚠️ **Resetar um commit (destrutivo)**:
+# Resetar para um commit específico
+git reset --hard id-do-commit
+
+
+📦 **Stash (guardar alterações temporariamente)**:
+# Guardar alterações
+git stash
+
+# Listar stashes
+git stash list
+
+# Aplicar stash
+git stash apply
+
+# Descartar stash
+git stash drop
+
+
+🌐 **Configurar um repositório remoto em um repositório local existente**:
+# Inicializar Git no repositório local, se ainda não estiver
+git init
+
+# Adicionar o repositório remoto
+git remote add origin https://github.com/usuario/repositorio.git
+
+# Enviar arquivos para o repositório remoto
+git push -u origin master
+
