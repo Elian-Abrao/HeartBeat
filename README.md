@@ -12,5 +12,5 @@ Heartbeat é uma API simples para monitorar a atividade de seus serviços.
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/seu-usuario/Heartbeat.git
+   git clone https://github.com/Elian-Abrao/Heartbeat.git
    cd Heartbeat
