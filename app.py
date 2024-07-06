@@ -4,6 +4,11 @@ from flask_cors import CORS
 import base64
 import io
 import logging
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 
 # Configuração do logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -27,6 +32,49 @@ STATUS_VALIDOS = [
     "❌ Erro",
     "⌛ Aguardando Inicio"
 ]
+
+# Função para enviar email
+def enviar_email(responsible, vm_name, code_name, location, log_content, filename):
+    try:
+        sender_email = "smtp@treeinova.com.br"
+        sender_password = "M3c%mec#46"
+        recipient_email = responsible
+
+        # Configurar a mensagem
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = recipient_email
+        msg['Subject'] = f"Alerta de Erro - {vm_name}"
+
+        body = (f"Olá,\n\n"
+                f"Foi detectado um erro na seguinte máquina virtual: {location}\n\n"
+                f"Empresa: {vm_name}\n"
+                f"Código: {code_name}\n"
+                f"Em anexo, segue o log do erro.\n\n"
+                f"Atenciosamente,\n"
+                f"HeartBeat - Sistema de Monitoramento")
+
+        msg.attach(MIMEText(body, 'plain'))
+
+        # Anexar o arquivo de log
+        if log_content:
+            part = MIMEBase('application', 'octet-stream')
+            part.set_payload(log_content)
+            encoders.encode_base64(part)
+            part.add_header('Content-Disposition', f'attachment; filename={filename}')
+            msg.attach(part)
+
+        # Enviar o email
+        with smtplib.SMTP("smtp-mail.outlook.com", 587) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            text = msg.as_string()
+            server.sendmail(sender_email, recipient_email, text)
+        
+        logging.info(f"Email enviado para {responsible} sobre erro na VM {vm_name}")
+
+    except Exception as e:
+        logging.error(f"Falha ao enviar email: {e}")
 
 @app.route('/')
 def index():
@@ -73,6 +121,11 @@ def heartbeat():
     }
 
     logging.info(f"Heartbeat registrado: {heartbeats[code_name]}")
+
+    # Enviar email se o estado for "❌ Erro"
+    if state == "❌ Erro":
+        enviar_email(responsible, vm_name, code_name, location, base64.b64decode(log_content.encode('utf-8')), filename)
+
     return jsonify({"status": "success", "timestamp": timestamp}), 200
 
 @app.route('/status', methods=['GET'])
