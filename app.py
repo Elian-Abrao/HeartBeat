@@ -50,6 +50,7 @@ def heartbeat():
 
     vm_name = request.form.get('vm_name')
     code_name = request.form.get('code_name')
+    responsible = request.form.get('responsible')
     location = request.form.get('location')
     timestamp = datetime.now()
 
@@ -66,6 +67,7 @@ def heartbeat():
         "location": location,
         "timestamp": timestamp,
         "state": state,
+        "responsible": responsible,
         "file": filename,
         "log": log_content
     }
@@ -79,20 +81,20 @@ def status():
 
 @app.route('/download/<vm_name>', methods=['GET'])
 def download(vm_name):
-    if vm_name in heartbeats:
-        info = heartbeats[vm_name]
-        if info["file"]:
-            log_content = base64.b64decode(info["log"].encode('utf-8'))
-            return send_file(io.BytesIO(log_content), as_attachment=True, download_name=info["file"], mimetype='application/octet-stream')
+    for code_name, info in heartbeats.items():
+        if info["vm_name"] == vm_name:
+            if info["file"]:
+                log_content = base64.b64decode(info["log"].encode('utf-8'))
+                return send_file(io.BytesIO(log_content), as_attachment=True, download_name=info["file"], mimetype='application/octet-stream')
     return jsonify({"status": "erro", "mensagem": "Arquivo não encontrado"}), 404
 
 @app.route('/view_file/<vm_name>', methods=['GET'])
 def view_file(vm_name):
-    if vm_name in heartbeats:
-        info = heartbeats[vm_name]
-        if info["file"]:
-            log_content = base64.b64decode(info["log"].encode('utf-8')).decode('utf-8')
-            return jsonify({"Conteudo": log_content})
+    for code_name, info in heartbeats.items():
+        if info["vm_name"] == vm_name:
+            if info["file"]:
+                log_content = base64.b64decode(info["log"].encode('utf-8')).decode('utf-8')
+                return jsonify({"Conteudo": log_content})
     return jsonify({"status": "erro", "mensagem": "Arquivo não encontrado"}), 404
 
 if __name__ == '__main__':
